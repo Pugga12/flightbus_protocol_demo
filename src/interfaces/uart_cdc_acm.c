@@ -12,8 +12,10 @@ LOG_MODULE_REGISTER(flightbus_cdc_acm_interface);
 
 #define RING_BUF_SIZE 1024
 uint8_t ring_buffer[RING_BUF_SIZE];
+uint8_t write_buffer[RING_BUF_SIZE];
 
-struct ring_buf ringbuf;
+struct ring_buf readbuf;
+struct ring_buf writebuf;
 static bool rx_throttled;
 
 
@@ -25,7 +27,7 @@ static void interrupt_handler(const struct device *dev, void *user_data) {
             int recv_len, rb_len;
             uint8_t buffer[64];
 
-            size_t len = MIN(ring_buf_space_get(&ringbuf),
+            size_t len = MIN(ring_buf_space_get(&readbuf),
                      sizeof(buffer));
 
             if (len == 0) {
@@ -41,39 +43,23 @@ static void interrupt_handler(const struct device *dev, void *user_data) {
                 recv_len = 0;
             }
 
-            rb_len = ring_buf_put(&ringbuf, buffer, recv_len);
+            rb_len = ring_buf_put(&readbuf, buffer, recv_len);
             if (rb_len < recv_len) {
                 LOG_ERR("Drop %u bytes", recv_len - rb_len);
             }
 
-            LOG_DBG("tty fifo -> ringbuf %d bytes", rb_len);
-            if (rb_len) {
-                uart_irq_tx_enable(dev);
-            }
+            LOG_DBG("tty fifo -> read buffer %d bytes", rb_len);
         }
 
         if (uart_irq_tx_ready(dev)) {
             uint8_t buffer[64];
-            int rb_len, send_len;
 
-            rb_len = ring_buf_get(&ringbuf, buffer, sizeof(buffer));
-            if (!rb_len) {
-                LOG_DBG("Ring buffer empty, disable TX IRQ");
+            if (ring_buf_get(&writebuf, buffer, sizeof(buffer)) > 0) {
+                int sendlen = uart_fifo_fill(dev, buffer, sizeof(buffer));
+                LOG_DBG("write buffer -> write buffer %d bytes", sendlen);
+            } else {
                 uart_irq_tx_disable(dev);
-                continue;
             }
-
-            if (rx_throttled) {
-                uart_irq_rx_enable(dev);
-                rx_throttled = false;
-            }
-
-            send_len = uart_fifo_fill(dev, buffer, rb_len);
-            if (send_len < rb_len) {
-                LOG_ERR("Drop %d bytes", rb_len - send_len);
-            }
-
-            LOG_DBG("ringbuf -> tty fifo %d bytes", send_len);
         }
     }
 }
@@ -102,7 +88,8 @@ int start_cdc_acm(const struct device *dev) {
         return -1;
     }
 
-    ring_buf_init(&ringbuf, sizeof(ring_buffer), ring_buffer);
+    ring_buf_init(&readbuf, sizeof(ring_buffer), ring_buffer);
+    ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
     LOG_INF("USB initialized! Waiting for DTR");
     // wait for DTR signal
     waitForDTR(dev);
@@ -115,4 +102,25 @@ int start_cdc_acm(const struct device *dev) {
     uart_irq_rx_enable(dev);
 
     return 0;
+}
+
+// write to the cdc-acm port
+void write(const uint8_t *data, size_t len, const struct device *dev) {
+    ring_buf_put(&writebuf, data, len);
+    uart_irq_tx_enable(dev);
+}
+
+// read a specified amount of bytes from the cdc-acm port
+uint8_t* read(const size_t len, const struct device *dev) {
+    uint8_t *data = k_malloc(len);
+    if (!data) {
+        return NULL;  // Memory allocation failed
+    }
+    ring_buf_get(&readbuf, data, len);
+    if (ring_buf_item_space_get(&readbuf) < RING_BUF_SIZE && rx_throttled) {
+        // recieve ringbuff is no longer full, unthrottle
+        rx_throttled = false;
+        uart_irq_rx_enable(dev);
+    }
+    return data;
 }

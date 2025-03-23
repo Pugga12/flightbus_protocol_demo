@@ -4,8 +4,12 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/device.h>
-const struct device *const uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
-extern "C" int start_cdc_acm(const struct device *dev);
+const device *const uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
+extern "C" {
+    int start_cdc_acm(const device *dev);
+    uint8_t* read(size_t len, const device *dev);
+    void write(const uint8_t *data, size_t len, const device *dev);
+};
 
 int main(void) {
     int ret;
