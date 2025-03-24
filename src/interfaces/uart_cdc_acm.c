@@ -11,13 +11,14 @@
 LOG_MODULE_REGISTER(flightbus_cdc_acm_interface);
 
 #define RING_BUF_SIZE 1024
-uint8_t ring_buffer[RING_BUF_SIZE];
+uint8_t read_buffer[RING_BUF_SIZE];
 uint8_t write_buffer[RING_BUF_SIZE];
 
 struct ring_buf readbuf;
 struct ring_buf writebuf;
 static bool rx_throttled;
-
+struct k_mutex read_mutex;
+struct k_mutex write_mutex;
 
 static void interrupt_handler(const struct device *dev, void *user_data) {
     ARG_UNUSED(user_data);
@@ -88,7 +89,9 @@ int start_cdc_acm(const struct device *dev) {
         return -1;
     }
 
-    ring_buf_init(&readbuf, sizeof(ring_buffer), ring_buffer);
+    ring_buf_init(&readbuf, sizeof(read_buffer), read_buffer);
+    k_mutex_init(&read_mutex);
+    k_mutex_init(&write_mutex);
     ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
     LOG_INF("USB initialized! Waiting for DTR");
     // wait for DTR signal
@@ -105,22 +108,54 @@ int start_cdc_acm(const struct device *dev) {
 }
 
 // write to the cdc-acm port
-void write(const uint8_t *data, size_t len, const struct device *dev) {
-    ring_buf_put(&writebuf, data, len);
+size_t write(const uint8_t *data, const size_t len, const struct device *dev) {
+    if (!data || len == 0) {
+        return -EINVAL;  // Invalid argument
+    }
+
+    k_mutex_lock(&write_mutex, K_FOREVER);  // Lock before accessing ring buffer
+
+    size_t bytes_written = ring_buf_put(&writebuf, data, len);
+    if (bytes_written == 0) {
+        k_mutex_unlock(&write_mutex);
+        return -EAGAIN;  // ring buffer full, try again later
+    }
+
+    if (bytes_written < len) {
+        LOG_ERR("Incomplete Write: Written %u/%u bytes to TX buffer", bytes_written, len);
+    }
+
+    // If data was added to the ring buffer, enable TX interrupt
     uart_irq_tx_enable(dev);
+
+    k_mutex_unlock(&write_mutex);  // Unlock after writing
+    return bytes_written;
 }
 
 // read a specified amount of bytes from the cdc-acm port
-uint8_t* read(const size_t len, const struct device *dev) {
-    uint8_t *data = k_malloc(len);
-    if (!data) {
-        return NULL;  // Memory allocation failed
+size_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
+    if (!buffer || len <= 0) {
+        return -EINVAL;
     }
-    ring_buf_get(&readbuf, data, len);
+
+    // lock the mutex, then read the ringbuf
+    k_mutex_lock(&read_mutex, K_FOREVER);
+    size_t bytes_read = ring_buf_get(&readbuf, buffer, len);
+    if (bytes_read == 0) {
+        // no data unavailable, unlock and return an error
+        k_mutex_unlock(&read_mutex);
+        return -EAGAIN;
+    }
+
+    if (bytes_read < len) {
+        LOG_ERR("Incomplete Read: Read %u/%u bytes from RX buffer", bytes_read, len);
+    }
+
     if (ring_buf_item_space_get(&readbuf) < RING_BUF_SIZE && rx_throttled) {
-        // recieve ringbuff is no longer full, unthrottle
         rx_throttled = false;
         uart_irq_rx_enable(dev);
     }
-    return data;
+
+    k_mutex_unlock(&read_mutex);
+    return bytes_read;
 }
