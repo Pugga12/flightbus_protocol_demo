@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+enum FB_MESSAGE_TYPE {
+  DEVICE_REGISTER = 0;
+  GET_SIM_INFO = 1;
+  NAVDATA_GET_ARPT_INFO = 2;
+  NAVDATA_GET_NAVAID_INFO = 3;
+  NAVAID_GET_FIX_INFO = 4;
+  REQUEST_SIMVAR_ONCE = 5;
+  REQUEST_SIMVAR_STREAM = 6;
+  ACK = 7;
+  NAK = 8;
+}
+
+message FB_MESSAGE_P2P {
+  uint32 sourceAddress = 1;
+  uint32 destAddress = 2;
+  uint32 packet_ref_number = 3;
+  FB_MESSAGE_TYPE messageType = 4;
+  oneof message_body {
+    string string = 5;
+    bytes bin = 6;
+  }
+}

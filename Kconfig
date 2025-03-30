@@ -1,0 +1,20 @@
+menu "FlightBus Interface Configuration"
+
+config FLIGHTBUS_CDC_ACM
+    bool "Enable FlightBus CDC-ACM UART Interface"
+    default y
+    select USB_CDC_ACM
+    select UART_INTERRUPT_DRIVEN
+    help
+      Enables the FlightBus CDC-ACM UART interface for recieving FlightBus packets over USB UART
+
+config PACKET_DBG_OUTPUT
+    bool "Print decoded packets to UART interface"
+    default n
+    help
+      Prints the decoded data from the protobuf messages sent over the wire. 
+      This outputs over the Logging interface, usually uart0 (not the CDC-ACM interface)
+
+endmenu
+
+source "Kconfig.zephyr"

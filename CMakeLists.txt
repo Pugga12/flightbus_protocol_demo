@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.20.0)
 
-find_package(Zephyr)
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(flightbus_demo_cdc_acm)
-
-FILE(GLOB app_sources src/*.cpp src/interfaces/*.c)
-target_sources(app PRIVATE ${app_sources})
+set(SOURCE_FILES 
+    ${CMAKE_SOURCE_DIR}/src/main.cpp 
+    ${CMAKE_SOURCE_DIR}/src/interfaces/uart_cdc_acm.c
+    ${CMAKE_SOURCE_DIR}/src/interfaces/protobufs/protobuf_util.cpp
+)
+target_sources(app PRIVATE ${SOURCE_FILES})
 
 list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
 include(nanopb)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+zephyr_nanopb_sources(app src/interfaces/protobufs/flightbus_message.proto)

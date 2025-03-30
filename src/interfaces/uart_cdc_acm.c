@@ -8,6 +8,8 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/sys/ring_buffer.h>
 #include <zephyr/usb/usb_device.h>
+#include <sys/types.h>
+#include "protobufs/protobuf_util.h"
 LOG_MODULE_REGISTER(flightbus_cdc_acm_interface);
 
 #define RING_BUF_SIZE 1024
@@ -108,14 +110,14 @@ int start_cdc_acm(const struct device *dev) {
 }
 
 // write to the cdc-acm port
-size_t write(const uint8_t *data, const size_t len, const struct device *dev) {
+ssize_t write(const uint8_t *data, const size_t len, const struct device *dev) {
     if (!data || len == 0) {
         return -EINVAL;  // Invalid argument
     }
 
     k_mutex_lock(&write_mutex, K_FOREVER);  // Lock before accessing ring buffer
 
-    size_t bytes_written = ring_buf_put(&writebuf, data, len);
+    ssize_t bytes_written = (ssize_t)ring_buf_put(&writebuf, data, len);
     if (bytes_written == 0) {
         k_mutex_unlock(&write_mutex);
         return -EAGAIN;  // ring buffer full, try again later
@@ -133,14 +135,14 @@ size_t write(const uint8_t *data, const size_t len, const struct device *dev) {
 }
 
 // read a specified amount of bytes from the cdc-acm port
-size_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
+ssize_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
     if (!buffer || len <= 0) {
         return -EINVAL;
     }
 
     // lock the mutex, then read the ringbuf
     k_mutex_lock(&read_mutex, K_FOREVER);
-    size_t bytes_read = ring_buf_get(&readbuf, buffer, len);
+    ssize_t bytes_read = (ssize_t)ring_buf_get(&readbuf, buffer, len);
     if (bytes_read == 0) {
         // no data unavailable, unlock and return an error
         k_mutex_unlock(&read_mutex);
