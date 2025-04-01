@@ -13,6 +13,7 @@ extern "C" {
     int start_cdc_acm(const struct device *dev);
     ssize_t read(uint8_t *buffer, size_t len, const struct device *dev);
     ssize_t write(const uint8_t *data, size_t len, const struct device *dev);
+    size_t getAvailableRXBufferSize();
 
 #ifdef __cplusplus
 }

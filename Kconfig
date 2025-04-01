@@ -8,12 +8,19 @@ config FLIGHTBUS_CDC_ACM
     help
       Enables the FlightBus CDC-ACM UART interface for recieving FlightBus packets over USB UART
 
-config PACKET_DBG_OUTPUT
+config FLIGHTBUS_PACKET_DBG_OUTPUT
     bool "Print decoded packets to UART interface"
     default n
     help
       Prints the decoded data from the protobuf messages sent over the wire. 
       This outputs over the Logging interface, usually uart0 (not the CDC-ACM interface)
+
+config FLIGHTBUS_UART_MAX_MSG_SIZE
+    int "Max size of UART dynamic message buffer"
+    default 256
+    depends on FLIGHTBUS_CDC_ACM
+    help
+        The max size of the dynamic packet buffer used for decoding protobuf data from the UART interface.
 
 endmenu
 

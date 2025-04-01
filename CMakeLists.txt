@@ -6,6 +6,7 @@ set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/src/main.cpp 
     ${CMAKE_SOURCE_DIR}/src/interfaces/uart_cdc_acm.c
     ${CMAKE_SOURCE_DIR}/src/interfaces/protobufs/protobuf_util.cpp
+    ${CMAKE_SOURCE_DIR}/src/interfaces/uart_msg_processor.cpp
 )
 target_sources(app PRIVATE ${SOURCE_FILES})
 

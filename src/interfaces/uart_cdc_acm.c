@@ -9,8 +9,8 @@
 #include <zephyr/sys/ring_buffer.h>
 #include <zephyr/usb/usb_device.h>
 #include <sys/types.h>
-#include "protobufs/protobuf_util.h"
-LOG_MODULE_REGISTER(flightbus_cdc_acm_interface);
+#include "uart_msg_processor.h"
+LOG_MODULE_REGISTER(flightbus_cdc_acm);
 
 #define RING_BUF_SIZE 1024
 uint8_t read_buffer[RING_BUF_SIZE];
@@ -106,6 +106,9 @@ int start_cdc_acm(const struct device *dev) {
     uart_irq_callback_set(dev, interrupt_handler);
     uart_irq_rx_enable(dev);
 
+    // start the uart preprocessor
+    start_uart_pre_processor(dev);
+
     return 0;
 }
 
@@ -160,4 +163,11 @@ ssize_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
 
     k_mutex_unlock(&read_mutex);
     return bytes_read;
+}
+
+size_t getAvailableRXBufferSize() {
+    k_mutex_lock(&read_mutex, K_FOREVER);
+    const size_t available_bytes = ring_buf_space_get(&readbuf) - RING_BUF_SIZE;
+    k_mutex_unlock(&read_mutex);
+    return available_bytes;
 }
