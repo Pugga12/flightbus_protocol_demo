@@ -2,7 +2,7 @@
 // Created by adama on 3/25/25.
 //
 
-#include "protobuf_util.h"
+#include "protobuf_util.hpp"
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <zephyr/logging/log.h>

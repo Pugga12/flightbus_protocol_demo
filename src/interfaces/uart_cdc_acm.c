@@ -9,7 +9,7 @@
 #include <zephyr/sys/ring_buffer.h>
 #include <zephyr/usb/usb_device.h>
 #include <sys/types.h>
-#include "uart_msg_processor.h"
+#include "uart_msg_processor.hpp"
 LOG_MODULE_REGISTER(flightbus_cdc_acm);
 
 #define RING_BUF_SIZE 1024

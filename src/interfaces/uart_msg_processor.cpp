@@ -1,10 +1,10 @@
 //
 // Created by adama on 3/30/25.
 //
-#include "uart_msg_processor.h"
+#include "uart_msg_processor.hpp"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include "protobufs/protobuf_util.h"
+#include "protobufs/protobuf_util.hpp"
 #include "uart_cdc_acm.h"
 #include <zephyr/device.h>
 
