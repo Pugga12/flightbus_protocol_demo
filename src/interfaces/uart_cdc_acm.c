@@ -9,7 +9,6 @@
 #include <zephyr/sys/ring_buffer.h>
 #include <zephyr/usb/usb_device.h>
 #include <sys/types.h>
-#include "uart_msg_processor.hpp"
 LOG_MODULE_REGISTER(flightbus_cdc_acm);
 
 #define RING_BUF_SIZE 1024
@@ -81,24 +80,27 @@ static void waitForDTR(const struct device *dev) {
     }
 }
 
-int start_cdc_acm(const struct device *dev) {
+bool start(const struct device *dev, const bool dtrWait) {
     int ret;
 
     // initialize the usb port
     ret = usb_enable(NULL);
     if (ret != 0) {
         LOG_ERR("Failed to enable USB");
-        return -1;
+        return false;
     }
 
     ring_buf_init(&readbuf, sizeof(read_buffer), read_buffer);
     k_mutex_init(&read_mutex);
     k_mutex_init(&write_mutex);
     ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
-    LOG_INF("USB initialized! Waiting for DTR");
+    LOG_INF("USB initialized!");
     // wait for DTR signal
-    waitForDTR(dev);
-    LOG_INF("DTR set");
+    if (dtrWait) {
+        LOG_INF("Waiting for DTR");
+        waitForDTR(dev);
+        LOG_INF("DTR set");
+    }
 
     // wait 100ms for the host to finish setting up
     k_msleep(100);
@@ -106,10 +108,7 @@ int start_cdc_acm(const struct device *dev) {
     uart_irq_callback_set(dev, interrupt_handler);
     uart_irq_rx_enable(dev);
 
-    // start the uart preprocessor
-    start_uart_pre_processor(dev);
-
-    return 0;
+    return true;
 }
 
 // write to the cdc-acm port

@@ -7,8 +7,9 @@
 #include "protobufs/protobuf_util.hpp"
 #include "uart_cdc_acm.h"
 #include <zephyr/device.h>
+#include "../wrappers/UartCdcAcmWrapper.hpp"
 
-LOG_MODULE_DECLARE(flightbus_cdc_acm);
+LOG_MODULE_REGISTER(flightbus_data_processor);
 #define UART_THREADS_STACK_SIZE 3072
 #define WORK_QUEUE_THREAD_PRIORITY K_PRIO_COOP(8)
 #define PREPROCESSOR_THREAD_PRIORITY K_PRIO_COOP(7)
@@ -33,21 +34,22 @@ void process_uart_work(struct k_work *work_item) {
 
 void preprocess_uart_message(void *dev, void *, void *) {
     // Cast the device pointer to the correct type
-    struct device *device = static_cast<struct device*>(dev);
+    auto* uartWrapper = static_cast<UartCdcAcmWrapper*>(dev);
+
     while (true) {
         k_sleep(K_MSEC(250));
-        if (getAvailableRXBufferSize() == 0) {
+        if (UartCdcAcmWrapper::getAvailableRXBufferSize() == 0) {
             continue;
         }
         uint8_t input_buffer[CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE];
-        const ssize_t msg_len = read(input_buffer, sizeof(input_buffer), device);
+        const ssize_t msg_len = uartWrapper->read(input_buffer, CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE);
         if (msg_len > 3) {
             k_mutex_lock(&uart_work_mutex, K_FOREVER);
             uint8_t strippedBuffer[msg_len];
             ssize_t strippedBufferLen = validateAndStripHeader(input_buffer, strippedBuffer, msg_len);
             if (strippedBufferLen <= 0) {
-                continue;
                 k_mutex_unlock(&uart_work_mutex);
+                continue;
             }
             memcpy(uart_work.message_input_buffer, strippedBuffer, strippedBufferLen);
             uart_work.messageSize = strippedBufferLen;
@@ -57,7 +59,8 @@ void preprocess_uart_message(void *dev, void *, void *) {
     }
 }
 
-void start_uart_pre_processor(device *dev) {
+void start_uart_pre_processor(UartCdcAcmWrapper* uart) {
+    LOG_INF("Starting data processor on uart device '%s'", uart->deviceName);
     k_work_queue_init(&uart_work_q);
     k_work_queue_start(
         &uart_work_q,
@@ -73,7 +76,7 @@ void start_uart_pre_processor(device *dev) {
         uart_preprocessor_stack_area,
         K_THREAD_STACK_SIZEOF(uart_preprocessor_stack_area),
         preprocess_uart_message,
-        static_cast<void*>(dev),
+        uart,
         NULL,
         NULL,
         PREPROCESSOR_THREAD_PRIORITY,

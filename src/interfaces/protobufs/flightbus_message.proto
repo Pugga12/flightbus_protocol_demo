@@ -10,6 +10,7 @@ enum FB_MESSAGE_TYPE {
   REQUEST_SIMVAR_STREAM = 6;
   ACK = 7;
   NAK = 8;
+  BLINKENLIGHTS = 9;
 }
 
 message FB_MESSAGE_P2P {

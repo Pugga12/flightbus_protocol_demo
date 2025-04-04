@@ -2,3 +2,5 @@
 /build-sim
 ram_rpt.txt
 rom_rpt.txt
+/.idea
+/cmake-build-debug

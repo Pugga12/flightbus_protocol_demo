@@ -4,26 +4,16 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/device.h>
-#include "interfaces/uart_cdc_acm.h"
-#ifdef CONFIG_FLIGHTBUS_CDC_ACM
-const device *const uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
-#endif
+#include "interfaces/uart_msg_processor.hpp"
+#include <wrappers/UartCdcAcmWrapper.hpp>
 
-int main(void) {
-#ifdef CONFIG_FLIGHTBUS_CDC_ACM
-    int ret;
-
-    if (!device_is_ready(uart_dev)) {
-        printk("UART init failed.");
-        return -1;
+extern "C" {
+    int main(void) {
+        #ifdef CONFIG_FLIGHTBUS_CDC_ACM
+        const device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
+        UartCdcAcmWrapper uart_wrapper(uart_dev, false);
+        start_uart_pre_processor(&uart_wrapper);
+        #endif
+        return 0;
     }
-
-    ret = start_cdc_acm(uart_dev);
-    if (ret != 0) {
-        printk("Failed to start CDC ACM interface.");
-        return -1;
-    }
-#endif
-
-    return 0;
 }
