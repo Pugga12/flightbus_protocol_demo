@@ -22,12 +22,11 @@ struct uart_work {
     uint8_t message_input_buffer[CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE];
     size_t messageSize;
 };
-static struct uart_work uart_work;
 static struct k_mutex uart_work_mutex;
 struct k_thread preprocessor_thread;
 
 void process_uart_work(struct k_work *work_item) {
-    struct uart_work *uart_work_container = CONTAINER_OF(work_item, struct uart_work, work);
+    auto* uart_work_container = CONTAINER_OF(work_item, struct uart_work, work);
     FB_MESSAGE_P2P msg = FB_MESSAGE_P2P_init_zero;
     decode_message(&msg, uart_work_container->message_input_buffer, uart_work_container->messageSize);
 }
@@ -38,7 +37,7 @@ void preprocess_uart_message(void *dev, void *, void *) {
 
     while (true) {
         k_sleep(K_MSEC(250));
-        if (UartCdcAcmWrapper::getAvailableRXBufferSize() == 0) {
+        if (uartWrapper->getAvailableRXBufferSize() == 0) {
             continue;
         }
         uint8_t input_buffer[CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE];
@@ -51,9 +50,11 @@ void preprocess_uart_message(void *dev, void *, void *) {
                 k_mutex_unlock(&uart_work_mutex);
                 continue;
             }
-            memcpy(uart_work.message_input_buffer, strippedBuffer, strippedBufferLen);
-            uart_work.messageSize = strippedBufferLen;
-            k_work_submit(&uart_work.work);
+            auto* work_item = new struct uart_work;
+            k_work_init(&work_item->work, process_uart_work);
+            memcpy(work_item->message_input_buffer, strippedBuffer, strippedBufferLen);
+            work_item->messageSize = strippedBufferLen;
+            k_work_submit_to_queue(&uart_work_q, &work_item->work);
             k_mutex_unlock(&uart_work_mutex);
         }
     }
@@ -69,14 +70,14 @@ void start_uart_pre_processor(UartCdcAcmWrapper* uart) {
         WORK_QUEUE_THREAD_PRIORITY,
         NULL
     );
-    k_work_init(&uart_work.work, process_uart_work);
+    auto p1 = static_cast<void *>(uart);
     k_mutex_init(&uart_work_mutex);
     k_thread_create(
         &preprocessor_thread,
         uart_preprocessor_stack_area,
         K_THREAD_STACK_SIZEOF(uart_preprocessor_stack_area),
         preprocess_uart_message,
-        uart,
+        p1,
         NULL,
         NULL,
         PREPROCESSOR_THREAD_PRIORITY,
