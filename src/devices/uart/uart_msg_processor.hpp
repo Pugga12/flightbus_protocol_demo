@@ -2,8 +2,7 @@
 // Created by adama on 3/30/25.
 //
 #pragma once
-#include <wrappers/UartCdcAcmWrapper.hpp>
-#include <zephyr/kernel.h>
+#include "cdc-acm/UartCdcAcmWrapper.hpp"
 #ifdef __cplusplus
     extern "C" {
 #endif

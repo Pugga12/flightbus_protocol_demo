@@ -5,9 +5,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include "protobufs/protobuf_util.hpp"
-#include "uart_cdc_acm.h"
 #include <zephyr/device.h>
-#include "../wrappers/UartCdcAcmWrapper.hpp"
+#include "cdc-acm/UartCdcAcmWrapper.hpp"
 
 LOG_MODULE_REGISTER(flightbus_data_processor);
 #define UART_THREADS_STACK_SIZE 3072
@@ -61,7 +60,7 @@ void preprocess_uart_message(void *dev, void *, void *) {
 }
 
 void start_uart_pre_processor(UartCdcAcmWrapper* uart) {
-    LOG_INF("Starting data processor on uart device '%s'", uart->deviceName);
+    LOG_INF("Starting data processor on uart device '%s'", uart->getDeviceName());
     k_work_queue_init(&uart_work_q);
     k_work_queue_start(
         &uart_work_q,

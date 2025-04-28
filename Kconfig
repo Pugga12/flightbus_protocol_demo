@@ -21,6 +21,11 @@ config FLIGHTBUS_UART_MAX_MSG_SIZE
     depends on FLIGHTBUS_CDC_ACM
     help
         The max size of the dynamic packet buffer used for decoding protobuf data from the UART interface.
+config FLIGHTBUS_MAILBOXW_MAX_MAILBOXES
+    int "Maximum amount of mailbox object held by MailboxW"
+    default 10
+    help
+        The max amount of mailboxes that can be held by the MailboxW mailbox management system
 
 endmenu
 
