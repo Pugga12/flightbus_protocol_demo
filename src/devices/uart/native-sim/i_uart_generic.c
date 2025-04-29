@@ -1,15 +1,14 @@
 //
-// Created by adama on 3/23/25.
+// Created by adama on 28/04/25.
 //
-#include "uart_cdc_acm.h"
+#include "i_uart_generic.h"
 #include <zephyr/logging/log.h>
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/sys/ring_buffer.h>
-#include <zephyr/usb/usb_device.h>
 #include <sys/types.h>
-LOG_MODULE_REGISTER(uart_internal);
+LOG_MODULE_DECLARE(uart_internal);
 
 #define RING_BUF_SIZE 1024
 uint8_t *read_buffer = NULL;
@@ -30,7 +29,7 @@ static bool allocateBuffers() {
     return true;
 }
 
-void free_buffers(void) {
+static void free_buffers(void) {
     if (read_buffer) {
         k_free(read_buffer);
         read_buffer = NULL;
@@ -100,36 +99,21 @@ static void waitForDTR(const struct device *dev) {
     }
 }
 
-bool start(const struct device *dev, const bool dtrWait) {
-    int ret;
-
-    // initialize the usb port
-    ret = usb_enable(NULL);
-    if (ret != 0) {
-        LOG_ERR("Failed to enable USB");
-        return false;
-    }
+void start(const struct device *dev, bool dtrWait) {
     k_mutex_init(&read_mutex);
     k_mutex_init(&write_mutex);
     allocateBuffers();
-    LOG_INF("USB initialized!");
-    // wait for DTR signal
+    // wait for dtr signal (if requested)
     if (dtrWait) {
         LOG_INF("Waiting for DTR");
         waitForDTR(dev);
         LOG_INF("DTR set");
     }
-
-    // wait 100ms for the host to finish setting up
-    k_msleep(100);
-
     uart_irq_callback_user_data_set(dev, interrupt_handler, NULL);
     uart_irq_rx_enable(dev);
-
-    return true;
 }
 
-bool shutdown(const struct device *dev) {
+void shutdown(const struct device *dev) {
     // disable interrupts
     uart_irq_rx_disable(dev);
     uart_irq_tx_disable(dev);
@@ -145,16 +129,10 @@ bool shutdown(const struct device *dev) {
     k_mutex_unlock(&write_mutex);
 
     free_buffers();
-    int ret = usb_disable();
-    if (ret != 0) {
-        LOG_ERR("Failed to disable USB");
-        return false;
-    }
-    LOG_INF("Successfully disabled CDC ACM device");
-    return true;
+    LOG_INF("Successfully shut down generic UART");
 }
 
-// write to the cdc-acm port
+// read a specified amount of bytes to the uart port
 ssize_t write(const uint8_t *data, const size_t len, const struct device *dev) {
     if (!data || len == 0) {
         return -EINVAL;  // Invalid argument
@@ -179,7 +157,7 @@ ssize_t write(const uint8_t *data, const size_t len, const struct device *dev) {
     return bytes_written;
 }
 
-// read a specified amount of bytes from the cdc-acm port
+// read a specified amount of bytes from the uart port
 ssize_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
     if (!buffer || len <= 0) {
         return -EINVAL;

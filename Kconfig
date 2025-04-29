@@ -1,12 +1,22 @@
 menu "FlightBus Interface Configuration"
 
-config FLIGHTBUS_CDC_ACM
-    bool "Enable FlightBus CDC-ACM UART Interface"
-    default y
-    select USB_CDC_ACM
-    select UART_INTERRUPT_DRIVEN
-    help
-      Enables the FlightBus CDC-ACM UART interface for recieving FlightBus packets over USB UART
+choice
+    prompt "Primary interface type"
+    config FLIGHTBUS_CDC_ACM
+        bool "CDC-ACM UART"
+        select USB_CDC_ACM
+        select SERIAL
+        select UART_INTERRUPT_DRIVEN
+        help
+          Enables the FlightBus CDC-ACM UART interface for receiving FlightBus packets over USB UART
+
+    config FLIGHTBUS_NATIVE_UART
+        bool "Native PTY UART"
+        select SERIAL
+        select UART_INTERRUPT_DRIVEN
+        help
+            Enables the FlightBus native PTY interface for receiving FlightBus packets in the native simulator
+endchoice
 
 config FLIGHTBUS_PACKET_DBG_OUTPUT
     bool "Print decoded packets to UART interface"
@@ -18,14 +28,8 @@ config FLIGHTBUS_PACKET_DBG_OUTPUT
 config FLIGHTBUS_UART_MAX_MSG_SIZE
     int "Max size of UART dynamic message buffer"
     default 256
-    depends on FLIGHTBUS_CDC_ACM
     help
         The max size of the dynamic packet buffer used for decoding protobuf data from the UART interface.
-config FLIGHTBUS_MAILBOXW_MAX_MAILBOXES
-    int "Maximum amount of mailbox object held by MailboxW"
-    default 10
-    help
-        The max amount of mailboxes that can be held by the MailboxW mailbox management system
 
 endmenu
 

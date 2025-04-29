@@ -4,7 +4,7 @@
 #pragma once
 
 #include <sys/types.h>
-#include "src/interfaces/protobufs/flightbus_message.pb.h"
+#include "src/protobufs/flightbus_message.pb.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

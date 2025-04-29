@@ -6,7 +6,7 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <zephyr/logging/log.h>
-#include "src/interfaces/protobufs/flightbus_message.pb.h"
+#include "src/protobufs/flightbus_message.pb.h"
 #include <sys/types.h>
 #include <zephyr/sys/crc.h>
 LOG_MODULE_REGISTER(protobuf_processor);

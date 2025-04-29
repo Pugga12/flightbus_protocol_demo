@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 3.20.0)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(flightbus_demo_cdc_acm)
-set(SOURCE_FILES 
+set(SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/main.cpp
-        ${CMAKE_SOURCE_DIR}/src/devices/uart/cdc-acm/uart_cdc_acm.c
         ${CMAKE_SOURCE_DIR}/src/protobufs/protobuf_util.cpp
         ${CMAKE_SOURCE_DIR}/src/devices/uart/uart_msg_processor.cpp
-        ${CMAKE_SOURCE_DIR}/src/devices/uart/cdc-acm/UartCdcAcmWrapper.cpp
-        ${CMAKE_SOURCE_DIR}/src/devices/uart/UartBase.cpp
 )
+if (CONFIG_FLIGHTBUS_CDC_ACM)
+    target_sources(app PRIVATE src/devices/uart/cdc-acm/uart_cdc_acm.c)
+    target_sources(app PRIVATE src/devices/uart/cdc-acm/UartCdcAcm.cpp)
+elseif (CONFIG_FLIGHTBUS_NATIVE_UART)
+    target_sources(app PRIVATE src/devices/uart/native-sim/i_uart_generic.c)
+    target_sources(app PRIVATE src/devices/uart/native-sim/UartGeneric.cpp)
+endif ()
 target_sources(app PRIVATE ${SOURCE_FILES})
 
 list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
