@@ -6,60 +6,73 @@
 #include "uart_cdc_acm.h"
 LOG_MODULE_REGISTER(uart_cdc_acm_wrapper);
 
+// constructs a new CDC ACM Wrapper
 UartCdcAcmWrapper::UartCdcAcmWrapper(const struct device *device, const bool dtrWait){
-    this->dtrWait = dtrWait;
-    this->deviceType = "UART_CDC_ACM";
-    this->device = device;
-    this->deviceName = this->device->name;
+    this->mDtrWait = dtrWait;
+    this->mDeviceType = "UART_CDC_ACM";
+    this->mDevice = device;
+    this->mDeviceName = this->mDevice->name;
 }
 
+// reads a specified number of bytes from the device and fills the passed in buffer
+// returns -EIO if device not ready, number of bytes read if successful
 ssize_t UartCdcAcmWrapper::read(uint8_t *buffer, const size_t len) const {
-    if (deviceReady) {
-        return ::read(buffer, len, device);
+    if (mDeviceReady) {
+        return ::read(buffer, len, mDevice);
     }
-    LOG_ERR("Attemped to read from device %s, which is currently not ready", deviceName);
+    LOG_ERR("Attemped to read from device %s, which is currently not ready", mDeviceName);
     return -EIO;
 }
 
+// writes a specified number of bytes from the passed in data buffer to the device
+// returns -EIO if device not ready, number of bytes read if successful
 ssize_t UartCdcAcmWrapper::write(const uint8_t *data, const size_t len) const {
-    if (deviceReady) {
-        return ::write(data, len, device);
+    if (mDeviceReady) {
+        return ::write(data, len, mDevice);
     }
-    LOG_ERR("Attemped to write to device %s, which is currently not ready", deviceName);
+    LOG_ERR("Attemped to write to device %s, which is currently not ready", mDeviceName);
     return -EIO;
 }
 
+// returns the number of bytes available to read from the device
+// returns -EIO if device not ready or number of bytes if successful
 ssize_t UartCdcAcmWrapper::getAvailableRXBufferSize() {
-    if (deviceReady) {
+    if (mDeviceReady) {
         return static_cast<ssize_t>(::getAvailableRXBufferSize());
     }
-    LOG_ERR("Attemped to get available RX buffer size from device %s, which is currently not ready", deviceName);
+    LOG_ERR("Attemped to get available RX buffer size from device %s, which is currently not ready", mDeviceName);
     return -EIO;
 }
 
+// start the device
 bool UartCdcAcmWrapper::start() {
-    LOG_INF("Attempting to start device '%s' of device type '%s'", deviceName, deviceType);
-    bool deviceAvail = device_is_ready(device);
+    LOG_INF("Attempting to start device '%s' of device type '%s'", mDeviceName, mDeviceType);
+    bool deviceAvail = device_is_ready(mDevice);
     if (!deviceAvail) {
-        LOG_ERR("Device '%s' not ready", deviceName);
+        LOG_ERR("Device '%s' not ready", mDeviceName);
         return false;
     }
-    deviceAvail = ::start(this->device, this->dtrWait);
+    deviceAvail = ::start(this->mDevice, this->mDtrWait);
     if (!deviceAvail) {
-        LOG_ERR("Failed to start UART CDC ACM device '%s'", deviceName);
+        LOG_ERR("Failed to start UART CDC ACM device '%s'", mDeviceName);
         return false;
     }
-    LOG_INF("'%s' device '%s' ready", deviceType, deviceName);
-    deviceReady = true;
+    LOG_INF("'%s' device '%s' ready", mDeviceType, mDeviceName);
+    mDeviceReady = true;
     return true;
 }
 
-UartCdcAcmWrapper::~UartCdcAcmWrapper() = default;
+UartCdcAcmWrapper::~UartCdcAcmWrapper() {
+    LOG_INF("Attempting to stop device '%s'", mDeviceName);
+    UartCdcAcmWrapper::stop();
+};
 
+// stop the device (currently does nothing)
 bool UartCdcAcmWrapper::stop() {
-    return true;
+    return ::shutdown(mDevice);
 }
 
+// get device name
 const char * UartCdcAcmWrapper::getDeviceName() const {
-    return deviceName;
+    return mDeviceName;
 }

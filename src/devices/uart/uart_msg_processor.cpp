@@ -6,7 +6,6 @@
 #include <zephyr/logging/log.h>
 #include "protobufs/protobuf_util.hpp"
 #include <zephyr/device.h>
-#include "cdc-acm/UartCdcAcmWrapper.hpp"
 
 LOG_MODULE_REGISTER(flightbus_data_processor);
 #define UART_THREADS_STACK_SIZE 3072
@@ -24,16 +23,15 @@ struct uart_work {
 static struct k_mutex uart_work_mutex;
 struct k_thread preprocessor_thread;
 
-void process_uart_work(struct k_work *work_item) {
+// work queue handler
+static void process_uart_work(struct k_work *work_item) {
     auto* uart_work_container = CONTAINER_OF(work_item, struct uart_work, work);
     FB_MESSAGE_P2P msg = FB_MESSAGE_P2P_init_zero;
     decode_message(&msg, uart_work_container->message_input_buffer, uart_work_container->messageSize);
 }
 
-void preprocess_uart_message(void *dev, void *, void *) {
-    // Cast the device pointer to the correct type
-    auto* uartWrapper = static_cast<UartCdcAcmWrapper*>(dev);
-
+// handles the actual logic of preprocessing uart messages
+static void preprocess_uart_message(UartBase *uartWrapper) {
     while (true) {
         k_sleep(K_MSEC(250));
         if (uartWrapper->getAvailableRXBufferSize() == 0) {
@@ -59,7 +57,15 @@ void preprocess_uart_message(void *dev, void *, void *) {
     }
 }
 
-void start_uart_pre_processor(UartCdcAcmWrapper* uart) {
+// the thread entry point for the uart preprocessor
+// also performs graceful termination of the preprocessor and work queue
+static void preprocessor_entry_point(void *dev, void *, void *) {
+    auto* uartWrapper = static_cast<UartBase*>(dev);
+    preprocess_uart_message(uartWrapper);
+}
+
+// thread setup
+void start_uart_pre_processor(UartBase* uart) {
     LOG_INF("Starting data processor on uart device '%s'", uart->getDeviceName());
     k_work_queue_init(&uart_work_q);
     k_work_queue_start(
@@ -75,7 +81,7 @@ void start_uart_pre_processor(UartCdcAcmWrapper* uart) {
         &preprocessor_thread,
         uart_preprocessor_stack_area,
         K_THREAD_STACK_SIZEOF(uart_preprocessor_stack_area),
-        preprocess_uart_message,
+        preprocessor_entry_point,
         p1,
         NULL,
         NULL,

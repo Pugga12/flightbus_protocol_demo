@@ -12,14 +12,34 @@
 LOG_MODULE_REGISTER(flightbus_cdc_acm);
 
 #define RING_BUF_SIZE 1024
-uint8_t read_buffer[RING_BUF_SIZE];
-uint8_t write_buffer[RING_BUF_SIZE];
+uint8_t *read_buffer = NULL;
+uint8_t *write_buffer = NULL;
 
 struct ring_buf readbuf;
 struct ring_buf writebuf;
 static bool rx_throttled;
 struct k_mutex read_mutex;
 struct k_mutex write_mutex;
+
+static bool allocateBuffers() {
+    read_buffer = k_malloc(RING_BUF_SIZE);
+    write_buffer = k_malloc(RING_BUF_SIZE);
+    if (!read_buffer || !write_buffer) return false;
+    ring_buf_init(&readbuf, sizeof(read_buffer), read_buffer);
+    ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
+    return true;
+}
+
+void free_buffers(void) {
+    if (read_buffer) {
+        k_free(read_buffer);
+        read_buffer = NULL;
+    }
+    if (write_buffer) {
+        k_free(write_buffer);
+        write_buffer = NULL;
+    }
+}
 
 static void interrupt_handler(const struct device *dev, void *user_data) {
     ARG_UNUSED(user_data);
@@ -89,11 +109,9 @@ bool start(const struct device *dev, const bool dtrWait) {
         LOG_ERR("Failed to enable USB");
         return false;
     }
-
-    ring_buf_init(&readbuf, sizeof(read_buffer), read_buffer);
     k_mutex_init(&read_mutex);
     k_mutex_init(&write_mutex);
-    ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
+    allocateBuffers();
     LOG_INF("USB initialized!");
     // wait for DTR signal
     if (dtrWait) {
@@ -105,9 +123,34 @@ bool start(const struct device *dev, const bool dtrWait) {
     // wait 100ms for the host to finish setting up
     k_msleep(100);
 
-    uart_irq_callback_set(dev, interrupt_handler);
+    uart_irq_callback_user_data_set(dev, interrupt_handler, NULL);
     uart_irq_rx_enable(dev);
 
+    return true;
+}
+
+bool shutdown(const struct device *dev) {
+    // disable interrupts
+    uart_irq_rx_disable(dev);
+    uart_irq_tx_disable(dev);
+    uart_irq_callback_user_data_set(dev, NULL, NULL);
+    rx_throttled = false;
+
+    k_mutex_lock(&read_mutex, K_FOREVER);
+    ring_buf_reset(&readbuf);
+    k_mutex_unlock(&read_mutex);
+
+    k_mutex_lock(&write_mutex, K_FOREVER);
+    ring_buf_reset(&writebuf);
+    k_mutex_unlock(&write_mutex);
+
+    free_buffers();
+    int ret = usb_disable();
+    if (ret != 0) {
+        LOG_ERR("Failed to disable USB");
+        return false;
+    }
+    LOG_INF("Successfully disabled CDC ACM device");
     return true;
 }
 
@@ -166,7 +209,7 @@ ssize_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
 
 size_t getAvailableRXBufferSize() {
     k_mutex_lock(&read_mutex, K_FOREVER);
-    const size_t available_bytes = ring_buf_space_get(&readbuf) - RING_BUF_SIZE;
+    const size_t available_bytes = ring_buf_size_get(&readbuf);
     k_mutex_unlock(&read_mutex);
     return available_bytes;
 }

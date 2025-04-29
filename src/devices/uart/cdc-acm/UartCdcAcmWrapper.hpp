@@ -8,7 +8,7 @@
 #include "devices/uart/UartBase.hpp"
 
 class UartCdcAcmWrapper : public UartBase {
-    bool dtrWait = false;
+    bool mDtrWait = false;
     public:
         explicit UartCdcAcmWrapper(const struct device *device, bool dtrWait);
         ssize_t read(uint8_t *buffer, size_t len) const override;
