@@ -2,24 +2,26 @@ menu "FlightBus Interface Configuration"
 
 choice
     prompt "Primary interface type"
+    help
+        The primary interface is the device (usually serial) where messages are sent and recieved from the simulator and other FlightBUS protocol devices
     config FLIGHTBUS_CDC_ACM
         bool "CDC-ACM UART"
         select USB_CDC_ACM
         select SERIAL
         select UART_INTERRUPT_DRIVEN
         help
-          Enables the FlightBus CDC-ACM UART interface for receiving FlightBus packets over USB UART
+          Enables the FlightBus CDC-ACM UART interface for receiving FlightBus messages over USB UART
 
     config FLIGHTBUS_NATIVE_UART
         bool "Native PTY UART"
         select SERIAL
         select UART_INTERRUPT_DRIVEN
         help
-            Enables the FlightBus native PTY interface for receiving FlightBus packets in the native simulator
+            Enables the FlightBus native PTY interface for receiving FlightBus messages in the native simulator
 endchoice
 
 config FLIGHTBUS_PACKET_DBG_OUTPUT
-    bool "Print decoded packets to UART interface"
+    bool "Print decoded messages to UART interface"
     default n
     help
       Prints the decoded data from the protobuf messages sent over the wire. 

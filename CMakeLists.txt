@@ -7,6 +7,8 @@ set(SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/protobufs/protobuf_util.cpp
         ${CMAKE_SOURCE_DIR}/src/devices/uart/uart_msg_processor.cpp
 )
+
+# primary interface selection
 if (CONFIG_FLIGHTBUS_CDC_ACM)
     target_sources(app PRIVATE src/devices/uart/cdc-acm/uart_cdc_acm.c)
     target_sources(app PRIVATE src/devices/uart/cdc-acm/UartCdcAcm.cpp)
