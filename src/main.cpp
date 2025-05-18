@@ -31,9 +31,5 @@ int main(void) {
         start_uart_pre_processor(uart_wrapper);
     }
 
-    #ifdef CONFIG_UART_INTERRUPT_DRIVEN
-    printk("Uart is interrupt driven");
-    #endif
-
     return 0;
 }
