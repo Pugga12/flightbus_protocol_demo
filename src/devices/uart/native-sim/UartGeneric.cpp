@@ -4,7 +4,7 @@
 #include "UartGeneric.hpp"
 #include <zephyr/logging/log.h>
 #include "i_uart_generic.h"
-LOG_MODULE_REGISTER(uart_generic);
+LOG_MODULE_REGISTER(uart_generic_impl);
 
 // constructs a new CDC ACM Wrapper
 UartGeneric::UartGeneric(const struct device *device, const bool dtrWait){

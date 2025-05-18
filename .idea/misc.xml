@@ -8,7 +8,7 @@
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="WestSettings"><![CDATA[{
-  "westExecutable": "/home/adama/zephyr-workspace/.venv/bin/west",
-  "boardName": "arduino_nano_33_ble/nrf52840/sense"
+  "westExecutable": "/home/adama/zephyrproject/.venv/bin/west",
+  "boardName": "qemu_cortex_m3/ti_lm3s6965"
 }]]></component>
 </project>

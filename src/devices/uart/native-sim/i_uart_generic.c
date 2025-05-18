@@ -8,7 +8,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/sys/ring_buffer.h>
 #include <sys/types.h>
-LOG_MODULE_DECLARE(uart_internal);
+LOG_MODULE_REGISTER(uart_generic_internal);
 
 #define RING_BUF_SIZE 1024
 uint8_t *read_buffer = NULL;
@@ -24,8 +24,8 @@ static bool allocateBuffers() {
     read_buffer = k_malloc(RING_BUF_SIZE);
     write_buffer = k_malloc(RING_BUF_SIZE);
     if (!read_buffer || !write_buffer) return false;
-    ring_buf_init(&readbuf, sizeof(read_buffer), read_buffer);
-    ring_buf_init(&writebuf, sizeof(write_buffer), write_buffer);
+    ring_buf_init(&readbuf, RING_BUF_SIZE, read_buffer);
+    ring_buf_init(&writebuf, RING_BUF_SIZE, write_buffer);
     return true;
 }
 
@@ -147,7 +147,7 @@ ssize_t write(const uint8_t *data, const size_t len, const struct device *dev) {
     }
 
     if (bytes_written < len) {
-        LOG_ERR("Incomplete Write: Written %u/%u bytes to TX buffer", bytes_written, len);
+        LOG_WRN("Incomplete Write: Written %u/%u bytes to TX buffer", bytes_written, len);
     }
 
     // If data was added to the ring buffer, enable TX interrupt
@@ -173,7 +173,7 @@ ssize_t read(uint8_t *buffer, const size_t len, const struct device *dev) {
     }
 
     if (bytes_read < len) {
-        LOG_ERR("Incomplete Read: Read %u/%u bytes from RX buffer", bytes_read, len);
+        LOG_WRN("Incomplete Read: Read %u/%u bytes from RX buffer", bytes_read, len);
     }
 
     if (ring_buf_item_space_get(&readbuf) < RING_BUF_SIZE && rx_throttled) {

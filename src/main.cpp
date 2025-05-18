@@ -21,7 +21,7 @@ int main(void) {
     uart_cdc_acm.start();
     uart_wrapper = &uart_cdc_acm;
     #elif defined(CONFIG_FLIGHTBUS_NATIVE_UART)
-    uart_dev = DEVICE_DT_GET_ONE(pty0);
+    uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
     static UartGeneric uart_generic(uart_dev, false);
     uart_generic.start();
     uart_wrapper = &uart_generic;
@@ -30,6 +30,10 @@ int main(void) {
     if (uart_wrapper) {
         start_uart_pre_processor(uart_wrapper);
     }
+
+    #ifdef CONFIG_UART_INTERRUPT_DRIVEN
+    printk("Uart is interrupt driven");
+    #endif
 
     return 0;
 }

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 def crc16_ccitt(seed: int, data: bytes) -> int:
     for byte in data:

@@ -1,0 +1,6 @@
+&uart0 {
+	compatible = "zephyr,native-tty-uart";
+	status = "okay";
+	current-speed = <115200>;
+	serial-port = "/tmp/ttySIM0";
+};

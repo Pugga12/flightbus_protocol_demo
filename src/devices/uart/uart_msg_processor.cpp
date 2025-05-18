@@ -33,16 +33,17 @@ static void process_uart_work(struct k_work *work_item) {
 // handles the actual logic of preprocessing uart messages
 static void preprocess_uart_message(UartBase *uartWrapper) {
     while (true) {
-        k_sleep(K_MSEC(250));
+        k_sleep(K_MSEC(500));
         if (uartWrapper->getAvailableRXBufferSize() == 0) {
             continue;
         }
         uint8_t input_buffer[CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE];
-        const ssize_t msg_len = uartWrapper->read(input_buffer, CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE);
-        if (msg_len > 3) {
+        const ssize_t read_size = uartWrapper->read(input_buffer, CONFIG_FLIGHTBUS_UART_MAX_MSG_SIZE);
+        if (read_size >= 3) {
             k_mutex_lock(&uart_work_mutex, K_FOREVER);
-            uint8_t strippedBuffer[msg_len];
-            ssize_t strippedBufferLen = validateAndStripHeader(input_buffer, strippedBuffer, msg_len);
+            uint8_t message_length = input_buffer[2];
+            uint8_t strippedBuffer[read_size];
+            ssize_t strippedBufferLen = validateAndStripHeader(input_buffer, strippedBuffer, read_size);
             if (strippedBufferLen <= 0) {
                 k_mutex_unlock(&uart_work_mutex);
                 continue;

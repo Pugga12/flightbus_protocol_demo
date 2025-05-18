@@ -9,13 +9,15 @@ choice
         select USB_CDC_ACM
         select SERIAL
         select UART_INTERRUPT_DRIVEN
+	select LOG_BACKEND_UART
         help
           Enables the FlightBus CDC-ACM UART interface for receiving FlightBus messages over USB UART
 
     config FLIGHTBUS_NATIVE_UART
-        bool "Native PTY UART"
+        bool "Native TTY UART (or UART0)"
         select SERIAL
-        select UART_INTERRUPT_DRIVEN
+	select UART_INTERRUPT_DRIVEN
+	select LOG_BACKEND_UART
         help
             Enables the FlightBus native PTY interface for receiving FlightBus messages in the native simulator
 endchoice
