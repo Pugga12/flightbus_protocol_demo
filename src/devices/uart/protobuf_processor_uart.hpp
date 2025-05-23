@@ -3,4 +3,4 @@
 //
 #pragma once
 #include "UartBase.hpp"
-void start_uart_pre_processor(UartBase* uart);
+void start_protobuf_processor_uart(UartBase* uart);

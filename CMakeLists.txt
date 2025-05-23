@@ -5,7 +5,8 @@ project(flightbus_demo_cdc_acm)
 set(SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/main.cpp
         ${CMAKE_SOURCE_DIR}/src/protobufs/protobuf_util.cpp
-        ${CMAKE_SOURCE_DIR}/src/devices/uart/uart_msg_processor.cpp
+        ${CMAKE_SOURCE_DIR}/src/devices/uart/protobuf_processor_uart.cpp
+        ${CMAKE_SOURCE_DIR}/src/flightbus-burst/burst-formats.cpp
 )
 
 # primary interface selection

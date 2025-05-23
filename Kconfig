@@ -35,6 +35,10 @@ config FLIGHTBUS_UART_MAX_MSG_SIZE
     help
         The max size of the dynamic packet buffer used for decoding protobuf data from the UART interface.
 
+config FLIGHTBUS_BURST_PROTOCOL
+    bool "[EXPERIMENTAL] Use new FlightBus Burst Messaging System"
+    default n
+
 endmenu
 
 source "Kconfig.zephyr"

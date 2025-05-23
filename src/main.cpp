@@ -4,7 +4,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/device.h>
-#include "devices/uart/uart_msg_processor.hpp"
+#include "devices/uart/protobuf_processor_uart.hpp"
 #ifdef CONFIG_FLIGHTBUS_CDC_ACM
 #include <devices/uart/cdc-acm/UartCdcAcm.hpp>
 #elif defined(CONFIG_FLIGHTBUS_NATIVE_UART)
@@ -28,7 +28,7 @@ int main(void) {
     #endif
 
     if (uart_wrapper) {
-        start_uart_pre_processor(uart_wrapper);
+        start_protobuf_processor_uart(uart_wrapper);
     }
 
     return 0;

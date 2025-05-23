@@ -1,7 +1,7 @@
 //
 // Created by adama on 3/30/25.
 //
-#include "uart_msg_processor.hpp"
+#include "protobuf_processor_uart.hpp"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include "protobufs/protobuf_util.hpp"
@@ -66,7 +66,7 @@ static void preprocessor_entry_point(void *dev, void *, void *) {
 }
 
 // thread setup
-void start_uart_pre_processor(UartBase* uart) {
+void start_protobuf_processor_uart(UartBase* uart) {
     LOG_INF("Starting data processor on uart device '%s'", uart->getDeviceName());
     k_work_queue_init(&uart_work_q);
     k_work_queue_start(
