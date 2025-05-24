@@ -1,0 +1,64 @@
+{
+  "busId": 0,
+  "senderId": 7,
+  "recieverId": 187,
+  "packetType": 66,
+  "amountOfStreams": 1,
+  "tdmaTOC": [
+    {
+      "streamId": 0,
+      "type": 0,
+      "offset": 0,
+      "length": 24,
+      "crc16": 0
+    },
+    {
+      "streamId": 1,
+      "type": 1,
+      "offset": 0,
+      "length": 43,
+      "crc16": 0
+    }
+  ],
+  "slots": [
+    {
+      "featureFlag": 0,
+      "latitude": 73.1174731,
+      "longitude": -20.2349392,
+      "altitude": 35000,
+      "apMode": {
+        "HDG": false,
+        "LNAV": false,
+        "VNAV": false,
+        "SPD": false,
+        "LOC": false,
+        "APPR": false,
+        "FD": false,
+        "ALT": false,
+        "LVLCH": false,
+        "VSPD": false,
+        "N1": false
+      },
+      "currentHdg": 360,
+      "selectedHeading": 357,
+      "currentIAS": 470,
+      "selectedIAS": 420,
+      "currentVS": -1800,
+      "selectedVS": -2100
+    },
+    {
+      "featureFlag": 0,
+      "spoilersArmed": true,
+      "spoilerPos": -16000,
+      "spoilerDeflectionR": 16000,
+      "spoilerDeflectionL": 16000,
+      "rudderPosition": -16000,
+      "rudderTrim": 3.14159,
+      "aileronPosition": -16000,
+      "aileronTrim": 3.14159,
+      "elevatorPosition": -16000,
+      "elevatorTrim": 3.14159,
+      "userSegment": []
+    }
+  ]
+}
