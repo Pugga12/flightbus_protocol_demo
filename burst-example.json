@@ -4,7 +4,7 @@
   "recieverId": 187,
   "packetType": 66,
   "amountOfStreams": 1,
-  "tdmaTOC": [
+  "streamTableOfContents": [
     {
       "streamId": 0,
       "type": 0,
@@ -27,17 +27,18 @@
       "longitude": -20.2349392,
       "altitude": 35000,
       "apMode": {
-        "HDG": false,
+        "headingHold": false,
         "LNAV": false,
         "VNAV": false,
-        "SPD": false,
-        "LOC": false,
-        "APPR": false,
-        "FD": false,
-        "ALT": false,
-        "LVLCH": false,
-        "VSPD": false,
-        "N1": false
+        "speedHold": false,
+        "vorLocHold": false,
+        "approachMode": false,
+        "flightDirector": false,
+        "altitudeHold": false,
+        "levelChange": false,
+        "verticalSpeedHold": false,
+        "n1Hold": false,
+        "autothrottle": false
       },
       "currentHdg": 360,
       "selectedHeading": 357,
@@ -57,8 +58,7 @@
       "aileronPosition": -16000,
       "aileronTrim": 3.14159,
       "elevatorPosition": -16000,
-      "elevatorTrim": 3.14159,
-      "userSegment": []
+      "elevatorTrim": 3.14159
     }
   ]
 }
