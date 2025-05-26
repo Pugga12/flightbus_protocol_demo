@@ -7,6 +7,7 @@ set(SOURCE_FILES
         ${CMAKE_SOURCE_DIR}/src/protobufs/protobuf_util.cpp
         ${CMAKE_SOURCE_DIR}/src/devices/uart/protobuf_processor_uart.cpp
         ${CMAKE_SOURCE_DIR}/src/flightbus-burst/burst-formats.cpp
+        ${CMAKE_SOURCE_DIR}/src/flightbus-burst/burst.cpp
 )
 
 # primary interface selection

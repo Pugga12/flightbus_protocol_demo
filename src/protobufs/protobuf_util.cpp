@@ -9,11 +9,8 @@
 #include "src/protobufs/flightbus_message.pb.h"
 #include <sys/types.h>
 #include <zephyr/sys/crc.h>
+#include "../flightbus-burst/burst.hpp"
 LOG_MODULE_REGISTER(protobuf_processor);
-
-static uint16_t convertU8toU16(uint8_t lsb, uint8_t msb) {
-    return (static_cast<uint16_t>(msb) << 8) | static_cast<uint16_t>(lsb);
-}
 
 ssize_t validateAndStripHeader(const uint8_t *inputBuffer, uint8_t *outputBuffer, size_t buffer_size) {
     if (!inputBuffer || !outputBuffer) {
@@ -31,7 +28,7 @@ ssize_t validateAndStripHeader(const uint8_t *inputBuffer, uint8_t *outputBuffer
         return -EINVAL;
     }
 
-    const uint16_t crc16 = convertU8toU16(inputBuffer[1], inputBuffer[2]);
+    const uint16_t crc16 = readUint16LE(inputBuffer[1], inputBuffer[2]);
 
     memcpy(outputBuffer, inputBuffer + 3, pktLength);
 

@@ -2,22 +2,25 @@
 // Created by adama on 5/22/25.
 //
 #pragma once
-#include <sys/types.h>
+#include <stdint.h>
 #include <vector>
+#include <span>
+#define MAX_STREAMS 16
+#define MAX_USER_VARS 256
 
-enum PacketType {
+enum PacketType : uint8_t {
     STREAM_BURST = 0,
     REQUEST_STREAM = 1,
     REQUEST_USER_SIMVAR = 2,
 };
 
-enum PredefinedStreamType {
+enum PredefinedStreamType : uint8_t {
     NAVIGATION = 0,
     CONTROL_SURFACES = 1,
     USER_SIMVARS = 2
 };
 
-struct FbStdTOCEntry{
+struct __attribute__((packed)) FbStdTOCEntry{
     uint8_t streamId;
     PredefinedStreamType streamType;
     uint16_t offset;
@@ -32,10 +35,10 @@ struct FbHeader {
     PacketType type;
     uint8_t amountOfStreams;
     uint8_t systemReserved = 0;
-    std::vector<FbStdTOCEntry> streams;
+    FbStdTOCEntry tableOfContents[MAX_STREAMS];
 };
 
-struct AutopilotMode {
+struct __attribute__((packed)) AutopilotMode {
     bool headingHold = false;
     bool LNAV = false;
     bool VNAV = false;
@@ -54,7 +57,7 @@ struct AutopilotMode {
     explicit AutopilotMode(uint16_t bits);
 };
 
-struct FbNavigationStream{
+struct __attribute__((packed)) FbNavigationStream{
     uint8_t featureFlags;
     float latitude;
     float longitude;
@@ -68,7 +71,7 @@ struct FbNavigationStream{
     int16_t selectedVS;
 };
 
-struct FbControlSurfacesStream {
+struct __attribute__((packed)) FbControlSurfacesStream {
     uint8_t featureFlags;
     bool spoilersArmed;
     int16_t spoilerPos;

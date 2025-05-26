@@ -7,7 +7,7 @@
 #include "protobufs/protobuf_util.hpp"
 #include <zephyr/device.h>
 
-LOG_MODULE_REGISTER(flightbus_data_processor);
+LOG_MODULE_REGISTER(flightbus_data_processor_nanopb);
 #define UART_THREADS_STACK_SIZE 3072
 #define WORK_QUEUE_THREAD_PRIORITY K_PRIO_COOP(8)
 #define PREPROCESSOR_THREAD_PRIORITY K_PRIO_COOP(7)
